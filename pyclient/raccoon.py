@@ -67,28 +67,7 @@ ADVERTISING_RADIO_ACCESS_ADDRESS = 0x8E89BED6
 ADVERTISING_CRC_INIT             = 0x555555
 
 
-config_template = '''# Raccoon BLE Sniffer Config
-
-# Output format
-# pick one of the following logging formats by uncommenting the format line
-
-# PKLG format minimics HCI data to/from a Bluetooth Controller. It can be opened with Wireshark and Apple's PacketLogger
-# format  = 'pklg'
-
-# PCAP format uses Bluetooth BLE Trace format defined by libbt/Ubertooth for use with CrackLE. It can be opened with Wireshark
-# format = 'crackle'
-
-# PCAP format uses Bluetooth BLE Trace format defined by Nordic. It can be opened with Wireshark.
-format = 'pcap'
-
-
-# Available Sniffer devices
-# List of detected serial ports, please uncomment your Raccoon BLE Sniffer devices
-sniffers = [
-SNIFFERS
-]
-
-'''
+config_template = ''
 
 config_name = 'config.py'
 
