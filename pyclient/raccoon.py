@@ -67,7 +67,28 @@ ADVERTISING_RADIO_ACCESS_ADDRESS = 0x8E89BED6
 ADVERTISING_CRC_INIT             = 0x555555
 
 
-config_template = ''
+config_template = '''# Raccoon BLE Sniffer Config
+
+# Output format
+# pick one of the following logging formats by uncommenting the format line
+
+# PKLG format minimics HCI data to/from a Bluetooth Controller. It can be opened with Wireshark and Apple's PacketLogger
+# format  = 'pklg'
+
+# PCAP format uses Bluetooth BLE Trace format defined by libbt/Ubertooth for use with CrackLE. It can be opened with Wireshark
+# format = 'crackle'
+
+# PCAP format uses Bluetooth BLE Trace format defined by Nordic. It can be opened with Wireshark.
+format = 'pcap'
+
+
+# Available Sniffer devices
+# List of detected serial ports, please uncomment your Raccoon BLE Sniffer devices
+sniffers = [
+SNIFFERS
+]
+
+'''
 
 config_name = 'config.py'
 
@@ -75,11 +96,10 @@ config_name = 'config.py'
 sniffer_uart_config = [
     # PCA10028
     {  0x1366, 0x1015, 1000000, 1},
-    # PCA10040
-    # {  0x1366, 0x1015, 1000000, 1},
     # Adafruit BLEFriend32
     {  0x10c4, 0xea60, 1000000, 1},
 ]
+
 
 def as_hex(data):
     str_list = []
@@ -87,8 +107,10 @@ def as_hex(data):
         str_list.append("{0:02x} ".format(byte))
     return ''.join(str_list)
 
+
 def addr_str(addr):
     return ':'.join([('%02x' % a) for a in addr[::-1]])
+
 
 def adv_parser(adv_data):
     while len(adv_data):
@@ -102,19 +124,14 @@ def adv_parser(adv_data):
         yield (item_type, item_data)
         adv_data = adv_data[1+item_len:]
 
+
 def adv_info_for_data(adv_data):
     info = []
     for (item_type, item_data) in adv_parser(adv_data):
         if item_type == 8 or item_type == 9:
-            info.append( "Name: '%s'" % item_data.decode('utf-8'))
-        if item_type == 2 or item_type == 3:
-            info.append ("UUID16: %04X" % unpack_from('<H', item_data))
-        if item_type == 4 or item_type == 5:
-            info.append ("UUID32: %08X" % unpack_from('<I', item_data))
-        if item_type == 6 or item_type == 7:
-            uuid128 = uuid.UUID(bytes_le=item_data)
-            info.append ("UUID128: " + str(uuid128))
+            info.append("%s" % item_data.decode('utf-8'))
     return ', '.join(info)
+
 
 def create_config_template(config_path):
     # get connected devices
@@ -126,48 +143,27 @@ def create_config_template(config_path):
     with open (config_path, 'wt') as fout:
         fout.write(config_template.replace("SNIFFERS", ports))
 
+
 """
 User Interface
 """
+
+
 class ConsoleUI(object):
     def __init__(self):
-        self.devices = {}
-        self.advertisements = 0
         self.packets = 0
         self.status_shown = True
         self.connection_event = 0
 
-    def print_line(self, line):
-        sys.stdout.write( "\r\x1b[K" + line)
-
-    def set_status(self, message):
-        self.print_line(message)
-
-    def print_line_with_newline(self, line):
-        self.print_line(line + "\n")
-
-    def log_debug(self, message):
-        self.print_line_with_newline("[-] %s" % message)
-
-    def log_info(self, message):
-        self.print_line_with_newline("[+] %s" % message)
-
-    def log_error(self, message):
-        self.print_line_with_newline("[!] %s" % message)
-
-
     def process_advertisement(self, packet, rssi):
-
-        self.advertisements += 1
-        self.set_status("Advertisements: %u" % self.advertisements)
-
         # get header
         (adv_header, payload_len) = unpack_from('BB', packet)
         pdu_type = adv_header & 0x0f
 
         # decode pdu type
-        adv_type = ["ADV_IND","ADV_DIRECT_IND","ADV_NONCONN_IND",None,"SCAN_RSP",None,"ADV_SCAN_IND",None,None,None,None,None,None,None,None,None][pdu_type]
-        if adv_type == None:
+        adv_type = ["ADV_IND", "ADV_DIRECT_IND", "ADV_NONCONN_IND", None, "SCAN_RSP", None, "ADV_SCAN_IND", None, None,
+                    None, None, None, None, None, None, None][pdu_type]
+        if adv_type is None:
             return
 
         # get payload
@@ -182,17 +178,14 @@ class ConsoleUI(object):
             return
 
         # use addr+type
-        addr_and_type = "%s %15s" % (addr, adv_type)
-
-        # check if in set
-        if addr_and_type in self.devices:
-            return
+        addr_and_type = "%s||%20s" % (addr, adv_type)
 
         adv_info = adv_info_for_data(adv_data)
 
-        self.devices[addr_and_type] = adv_data
         rssi = -rssi
-        self.log_info("%2u" % len(self.devices) + ". " + addr_and_type + " %4d dBm, " % rssi + adv_info)
+        # if 'GZ' in adv_info:
+        #     print(addr_and_type + "||%d||" % rssi + adv_info)
+        print(addr_and_type + "||%8d||" % rssi + adv_info)
 
     def process_packet(self, tag, data):
         if tag == TAG_DATA:
@@ -203,42 +196,19 @@ class ConsoleUI(object):
                 return
             packet  = data[12:-3]
             if aa == 0x8E89BED6:
-                self.process_advertisement(packet, rssi)
+                self.process_advertisement(packet, rssi) ########
             else:
                 if len(packet) > 2:
                     self.packets  += 1
-                self.set_status("Connection event %5u, data packets: %u" % (self.connection_event, self.packets))
-
-        if tag == TAG_MSG_CONNECT_REQUEST:
-            timestamp, = unpack_from("<I", data)
-            initiator  = data[4:10]
-            advertiser = data[10:16]
-            aa, interval_us, timeout_us, latency = unpack_from("<IIIH", data[16:])
-            self.log_info("CONNECTION %s -> %s -- aa %08x, interval %.2f ms, timeout_us %.2f ms, latency %u" % (addr_str(initiator), addr_str(advertiser), aa, interval_us / 1000, timeout_us / 1000, latency))
-            self.connection_event = 0
-
-        if tag == TAG_MSG_CONNECTION_EVENT:
-            timestamp, self.connection_event = unpack_from("<IH", data)
-
-        if tag == TAG_MSG_TERMINATE:
-            timestamp, reason = unpack_from("<IB", data)
-            if reason == 0:
-                self.log_info("TERMINATE, disconnect")
-            if reason == 1:
-                self.log_info("TERMINATE, timeout")
-
-        if tag == TAG_MSG_CHAN_MAP_UPDATE:
-            timestamp, ch0, ch1, ch2, ch3, ch4= unpack_from("<IBBBBB", data)
-            self.log_info("Channel Map Update: %02x%02x%02x%02x%02x" % (ch4, ch3, ch2, ch1, ch0))
-
-        if tag == TAG_MSG_CONN_PARAM_UPDATE:
-            timestamp, interval_us, timeout_us, latency = unpack_from("<IIIH", data)
-            self.log_info("Connection Parameter Update: interval %.2f ms, timeout %.2f ms, latency %u" % (interval_us / 1000, timeout_us / 1000, latency))
+                print("Connection event %5u, data packets: %u" % (self.connection_event, self.packets))
+                return
 
 
 """
 Sniffer connection
 """
+
+
 class Sniffer(object):
 
     aborted    = False
@@ -318,10 +288,11 @@ class Sniffer(object):
 Main application
 """
 
+
 def signal_handler(sig, frame):
     global cfg
     global ui
-    ui.log_info('\nThanks for using raccoon.')
+    print('\nThanks for using raccoon.')
     for sniffer in sniffers:
         sniffer.abort()
     sys.exit(0)
@@ -334,23 +305,7 @@ filter_mac = bytearray(6)
 format = 'pcap'
 rtscts = 1
 log_delay = 0.1
-rssi_min  = -80
-
-# command parser
-parser = argparse.ArgumentParser()
-parser.add_argument("-a", "--addr", help="follow only connections of device with bd_addr, e.g. 11:22:33:44:55:66")
-parser.add_argument("-r", "--rssi", help="set minimum RSSI, default = %d" % rssi_min)
-args = parser.parse_args()
-if args.addr:
-    # strip '-' and ':', store address in little endian
-    stripped = args.addr.replace(":","").replace("-","")
-    if len(stripped) != 12:
-        ui.log_error("Invalid BD_ADDR %s" % args.addr)
-        sys.exit(10)
-    for i in range(0,6):
-        filter_mac[5-i] = int(stripped[i*2:i*2+2], 16)
-if args.rssi:
-    rssi_min = int(args.rssi)
+rssi_min  = -100
 
 # get path to config file
 script_path = os.path.dirname(sys.argv[0])
@@ -361,7 +316,7 @@ else:
 
 # check config
 if not os.path.isfile(config_path):
-    ui.log_error("Config file %s does not exist" % config_path)
+    print("Config file %s does not exist" % config_path)
     create_config_template(config_path) 
     sys.exit(10)
 
@@ -374,7 +329,7 @@ sys.path.insert(0, script_path)
 import config as cfg
 
 if not cfg.sniffers:
-    ui.log_error("No sniffers object in Config file")
+    print("No sniffers object in Config file")
     create_config_template(config_path) 
     sys.exit(10)
 
@@ -383,25 +338,23 @@ cfg.format = cfg.format.lower()
 if cfg.format == 'pcap':
     filename = 'trace.pcap'
     output = PcapNordicTapWriter(filename)
-elif cfg.format == 'crackle':
-    filename = 'trace.pcap'
-    output = PcapLeLlWithPhdrWriter(filename)
-elif cfg.format == 'pklg':
-    filename = 'trace.pklg'
-    output = PklgAirWriter(filename)
 else:
     print('Unknown logging format %s' % cfg.format)
     sys.exit(10)
 
 cfg_summary = "Config: output %s (%s), min rssi %d dBm" % (filename, cfg.format, rssi_min)
-if args.addr:
-    cfg_summary += "- filter: %s" % args.addr
-ui.log_info(cfg_summary)
+print(cfg_summary)
 
 
 signal.signal(signal.SIGINT, signal_handler)
 
 event_cnt = 0
+
+
+parser = argparse.ArgumentParser(description='Bluetooth Observer')
+parser.add_argument('--channel', type=int, default=37, help='adv channel')
+args = parser.parse_args()
+channel_stamp = args.channel
 
 # log start
 log_start_sec = int(time.time())
@@ -413,7 +366,7 @@ for sniffer in cfg.sniffers:
     port   = sniffer['port']
     baud   = sniffer['baud']
     rtscts = sniffer['rtscts']
-    channel = 37 + sniffer_id
+    channel = channel_stamp + sniffer_id
 
     try:
 
@@ -432,28 +385,29 @@ for sniffer in cfg.sniffers:
             version = data.decode("utf-8")
 
         # sniffer info
-        ui.log_debug("Sniffer #%x: port %s, baud %u, rtscts %u, channel %u, version %s" % (sniffer_id, port, baud, rtscts, channel, version))
+        print("Sniffer #%x: port %s, baud %u, rtscts %u, channel %u, version %s" % (sniffer_id, port, baud, rtscts, channel, version))
 
         # start listening
         if channel < 40:
             rssi_min_neg = - rssi_min
-            sniffer.write( pack('<BHIBII6sB', TAG_CMD_SNIFF_CHANNEL, 20, 0, channel, ADVERTISING_RADIO_ACCESS_ADDRESS, ADVERTISING_CRC_INIT, filter_mac, rssi_min_neg ) )            
+            sniffer.write(pack('<BHIBII6sB', TAG_CMD_SNIFF_CHANNEL, 20, 0, channel, ADVERTISING_RADIO_ACCESS_ADDRESS, ADVERTISING_CRC_INIT, filter_mac, rssi_min_neg ) )
 
         sniffer_id += 1
         sniffers.append(sniffer)
 
     except (serial.SerialException, FileNotFoundError):
-        ui.log_error("Failed to connect to sniffer at port %s with %u baud" % (port, baud))
+        print("Failed to connect to sniffer at port %s with %u baud" % (port, baud))
 
 if len(sniffers) == 0:
-    ui.log_error("No working sniffer found. Please connect sniffer and/or update config.py")
+    print("No working sniffer found. Please connect sniffer and/or update config.py")
     sys.exit(0)
 
 last_timestamp_us = 0;
 direction_count = [ 0, 0, 0 ]
 
 # process input
-while 1:
+keep = 0
+while True:
 
     # log earliest event that has been received at least log_delay seconds ago
     earliest_event_sniffer      = None
@@ -487,9 +441,12 @@ while 1:
     length = len(data)
 
     if tag == TAG_MSG_TERMINATE:
-        ui.log_info("Restart sniffer on channel #%u" % earliest_event_sniffer.channel)
+        print("Restart sniffer on channel #%u" % earliest_event_sniffer.channel)
         earliest_event_sniffer.write( pack('<BHIBII6s', TAG_CMD_SNIFF_CHANNEL, 19, 0, earliest_event_sniffer.channel, ADVERTISING_RADIO_ACCESS_ADDRESS, ADVERTISING_CRC_INIT, filter_mac ) )
-
+        print('\nThanks for using raccoon.')
+        for sniffer in sniffers:
+            sniffer.abort()
+        sys.exit(0)
     if tag == TAG_DATA:
 
         # parse header
@@ -515,3 +472,12 @@ while 1:
 
     # forward packets to ui, too
     ui.process_packet(tag, data)
+    keep += 1
+
+    if keep == 2800:
+        print('\nThanks for using raccoon.')
+        for sniffer in sniffers:
+            sniffer.abort()
+        sys.exit(0)
+
+
