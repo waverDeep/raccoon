@@ -11,8 +11,9 @@ def createFolder(directory):
 
 
 meter = input('input informations : ')
+loop = int(input('input loop count : '))
 default_channel = 37
-for i in range(50):
+for i in range(loop):
     print('iterations : {}'.format(i))
     new_channel = i % 3 + default_channel
     dir_path = './rssi_pack_{}/info_{}'.format(time.strftime('%Y_%m_%d', time.localtime(time.time())), meter)
