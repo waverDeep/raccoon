@@ -177,11 +177,11 @@ class ConsoleUI(object):
         adv_info = adv_info_for_data(adv_data)
 
         rssi = -rssi
-        if 'GZ' in adv_info:
-            print(addr_and_type + "||%d||" % rssi + adv_info)
-        if 'RTLS' in adv_info:
-            print(addr_and_type + "||%d||" % rssi + adv_info)
-        # print(addr_and_type + "||%8d||" % rssi + adv_info)
+        # if 'GZ' in adv_info:
+        #     print(addr_and_type + "||%d||" % rssi + adv_info)
+        # if 'RTLS' in adv_info:
+        #     print(addr_and_type + "||%d||" % rssi + adv_info)
+        print(addr_and_type + "||%8d||" % rssi + adv_info)
 
     def process_packet(self, tag, data):
         if tag == TAG_DATA:
