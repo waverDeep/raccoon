@@ -285,187 +285,174 @@ def signal_handler(sig, frame):
         sniffer.abort()
     sys.exit(0)
 
+looper = True
+while looper:
 
-ui = ConsoleUI()
-filter_mac = bytearray(6)
+    ui = ConsoleUI()
+    filter_mac = bytearray(6)
 
-# configuration options
-format = 'pcap'
-rtscts = 1
-log_delay = 0.1
-rssi_min  = -100
+    # configuration options
+    format = 'pcap'
+    rtscts = 1
+    log_delay = 0.1
+    rssi_min  = -100
 
-# get path to config file
-script_path = os.path.dirname(sys.argv[0])
-if len(script_path) == 0:
-    config_path = config_name
-else:
-    config_path = script_path + '/' + config_name
+    # get path to config file
+    script_path = os.path.dirname(sys.argv[0])
+    if len(script_path) == 0:
+        config_path = config_name
+    else:
+        config_path = script_path + '/' + config_name
 
-# check config
-if not os.path.isfile(config_path):
-    print("Config file %s does not exist" % config_path)
-    create_config_template(config_path) 
-    sys.exit(10)
+    # check config
+    if not os.path.isfile(config_path):
+        print("Config file %s does not exist" % config_path)
+        create_config_template(config_path)
+        sys.exit(10)
 
-# TODO: process command line arguments for:
-# - minimum rssi
+    # TODO: process command line arguments for:
+    # - minimum rssi
 
-# load config
-sys.path.insert(0, script_path)
+    # load config
+    sys.path.insert(0, script_path)
 
-import config as cfg
-
-if not cfg.sniffers:
-    print("No sniffers object in Config file")
-    create_config_template(config_path) 
-    sys.exit(10)
-
-# open log writer
-cfg.format = cfg.format.lower()
-if cfg.format == 'pcap':
-    filename = 'trace.pcap'
-    output = PcapNordicTapWriter(filename)
-else:
-    print('Unknown logging format %s' % cfg.format)
-    sys.exit(10)
-
-cfg_summary = "Config: output %s (%s), min rssi %d dBm" % (filename, cfg.format, rssi_min)
-print(cfg_summary)
+    import config as cfg
 
 
-signal.signal(signal.SIGINT, signal_handler)
 
-event_cnt = 0
+    if not cfg.sniffers:
+        print("No sniffers object in Config file")
+        create_config_template(config_path)
+        sys.exit(10)
+
+    # open log writer
+    cfg.format = cfg.format.lower()
+    if cfg.format == 'pcap':
+        filename = 'trace.pcap'
+        output = PcapNordicTapWriter(filename)
+    else:
+        print('Unknown logging format %s' % cfg.format)
+        sys.exit(10)
+
+    cfg_summary = "Config: output %s (%s), min rssi %d dBm" % (filename, cfg.format, rssi_min)
+    print(cfg_summary)
 
 
-parser = argparse.ArgumentParser(description='Bluetooth Observer')
-parser.add_argument('--channel', type=int, default=37, help='adv channel')
-args = parser.parse_args()
-channel_stamp = args.channel
+    signal.signal(signal.SIGINT, signal_handler)
 
-# log start
-log_start_sec = int(time.time())
+    event_cnt = 0
 
-sniffer_id = 0
-sniffers = []
-for sniffer in cfg.sniffers:
-    # get config
-    port   = sniffer['port']
-    baud   = sniffer['baud']
-    rtscts = sniffer['rtscts']
-    channel = channel_stamp + sniffer_id
 
-    try:
+    parser = argparse.ArgumentParser(description='Bluetooth Observer')
+    parser.add_argument('--channel', type=int, default=37, help='adv channel')
+    args = parser.parse_args()
+    channel_stamp = args.channel
 
-        # create sniffer and start reading
-        sniffer = Sniffer(log_start_sec, port, baud, rtscts)
-        sniffer.start_reader_thread()
+    # log start
 
-        # could be part of constructor call
-        sniffer.channel = channel
-        
-        # check version
-        sniffer.write( pack('<BH', TAG_CMD_GET_VERSION, 0 ) )
-        (arrival_time, start_offset_us, tag, data) = sniffer.get_event()
-        version = ''
-        if tag == TAG_CMD_GET_VERSION:
-            version = data.decode("utf-8")
 
-        # sniffer info
-        print("Sniffer #%x: port %s, baud %u, rtscts %u, channel %u, version %s" % (sniffer_id, port, baud, rtscts, channel, version))
+    log_start_sec = int(time.time())
 
-        # start listening
-        if channel < 40:
-            rssi_min_neg = - rssi_min
-            sniffer.write(pack('<BHIBII6sB', TAG_CMD_SNIFF_CHANNEL, 20, 0, channel, ADVERTISING_RADIO_ACCESS_ADDRESS, ADVERTISING_CRC_INIT, filter_mac, rssi_min_neg ) )
+    sniffer_id = 0
+    sniffers = []
+    for sniffer in cfg.sniffers:
+        # get config
+        port   = sniffer['port']
+        baud   = sniffer['baud']
+        rtscts = sniffer['rtscts']
+        channel = channel_stamp + sniffer_id
 
-        sniffer_id += 1
-        sniffers.append(sniffer)
+        try:
 
-    except (serial.SerialException, FileNotFoundError):
-        print("Failed to connect to sniffer at port %s with %u baud" % (port, baud))
+            # create sniffer and start reading
+            sniffer = Sniffer(log_start_sec, port, baud, rtscts)
+            sniffer.start_reader_thread()
 
-if len(sniffers) == 0:
-    print("No working sniffer found. Please connect sniffer and/or update config.py")
-    sys.exit(0)
+            # could be part of constructor call
+            sniffer.channel = channel
 
-last_timestamp_us = 0;
-direction_count = [ 0, 0, 0 ]
+            # check version
+            sniffer.write( pack('<BH', TAG_CMD_GET_VERSION, 0 ) )
+            (arrival_time, start_offset_us, tag, data) = sniffer.get_event()
+            version = ''
+            if tag == TAG_CMD_GET_VERSION:
+                version = data.decode("utf-8")
 
-# process input
-keep = 0
-while True:
+            # sniffer info
+            print("Sniffer #%x: port %s, baud %u, rtscts %u, channel %u, version %s" % (sniffer_id, port, baud, rtscts, channel, version))
 
-    # log earliest event that has been received at least log_delay seconds ago
-    earliest_event_sniffer      = None
-    earliest_event_timestamp_us = None
-    earliest_event_arrival_time = None
+            # start listening
+            if channel < 40:
+                rssi_min_neg = - rssi_min
+                sniffer.write(pack('<BHIBII6sB', TAG_CMD_SNIFF_CHANNEL, 20, 0, channel, ADVERTISING_RADIO_ACCESS_ADDRESS, ADVERTISING_CRC_INIT, filter_mac, rssi_min_neg ) )
 
-    for sniffer in sniffers:
-        event = sniffer.peek_event()
-        if event == None:
+            sniffer_id += 1
+            sniffers.append(sniffer)
+
+        except (serial.SerialException, FileNotFoundError):
+            print("Failed to connect to sniffer at port %s with %u baud" % (port, baud))
+
+    if len(sniffers) == 0:
+        print("No working sniffer found. Please connect sniffer and/or update config.py")
+        sys.exit(0)
+
+    last_timestamp_us = 0
+    direction_count = [ 0, 0, 0 ]
+
+    # process input
+    keep = 0
+    while True:
+
+        # log earliest event that has been received at least log_delay seconds ago
+        earliest_event_sniffer      = None
+        earliest_event_timestamp_us = None
+        earliest_event_arrival_time = None
+
+        for sniffer in sniffers:
+            event = sniffer.peek_event()
+            if event == None:
+                continue
+
+            # get event time
+            (arrival_time, start_offset_us, tag, data) = event
+            (timestamp_sniffer_us, ) = unpack_from("<I", data)
+            timestamp_log_us = start_offset_us + timestamp_sniffer_us
+
+            # store if earlier
+            if (earliest_event_timestamp_us == None ) or (timestamp_log_us < earliest_event_timestamp_us):
+                earliest_event_sniffer = sniffer
+                earliest_event_timestamp_us      = timestamp_log_us
+                earliest_event_arrival_time = arrival_time
+
+        # check if log_delay old
+        if (earliest_event_timestamp_us == None) or ((time.time() - earliest_event_arrival_time) < log_delay):
+            time.sleep(0.1)
             continue
 
-        # get event time
-        (arrival_time, start_offset_us, tag, data) = event
-        (timestamp_sniffer_us, ) = unpack_from( "<I", data )
-        timestamp_log_us = start_offset_us + timestamp_sniffer_us
+        # finally, log event
+        (arrival_time, start_offset_us, tag, data) = earliest_event_sniffer.get_event()
+        timestamp_log_us = earliest_event_timestamp_us
+        length = len(data)
 
-        # store if earlier
-        if (earliest_event_timestamp_us == None ) or (timestamp_log_us < earliest_event_timestamp_us):
-            earliest_event_sniffer = sniffer
-            earliest_event_timestamp_us      = timestamp_log_us
-            earliest_event_arrival_time = arrival_time
+        if tag == TAG_MSG_TERMINATE:
+            print("Restart sniffer on channel #%u" % earliest_event_sniffer.channel)
+            for sniffer in sniffers:
+                sniffer.abort()
+            break
 
-    # check if log_delay old
-    if (earliest_event_timestamp_us == None) or ((time.time() - earliest_event_arrival_time) < log_delay):
-        time.sleep(0.1)
-        continue
+        if tag == TAG_DATA:
+            # parse header
+            timestamp_sniffer_us, channel, flags, rssi_negative, aa = unpack_from( "<IBBBxI", data )
+            packet = data[8:]
 
-    # finally, log event
-    (arrival_time, start_offset_us, tag, data) = earliest_event_sniffer.get_event()
-    timestamp_log_us = earliest_event_timestamp_us
-    length = len(data)
+        # forward packets to ui, too
+        ui.process_packet(tag, data)
+        keep += 1
 
-    if tag == TAG_MSG_TERMINATE:
-        print("Restart sniffer on channel #%u" % earliest_event_sniffer.channel)
-        earliest_event_sniffer.write( pack('<BHIBII6s', TAG_CMD_SNIFF_CHANNEL, 19, 0, earliest_event_sniffer.channel, ADVERTISING_RADIO_ACCESS_ADDRESS, ADVERTISING_CRC_INIT, filter_mac ) )
-        print('\nThanks for using raccoon.')
-        for sniffer in sniffers:
-            sniffer.abort()
-        sys.exit(0)
-    if tag == TAG_DATA:
-
-        # parse header
-        timestamp_sniffer_us, channel, flags, rssi_negative, aa = unpack_from( "<IBBBxI", data )
-        packet  = data[8:]
-
-        # dump packet
-        # print( tag, length, timestamp_log_us, channel, flags, rssi, as_hex(packet) )
-
-        # direction count - what is it used for?
-        direction = flags & 0x3
-        direction_count[ direction ] += 1
-
-        # delta and event count needed for pcap
-        delta_ts = timestamp_log_us - last_timestamp_us
-        last_timestamp_us = timestamp_log_us + 5 * 8 + ( length - 12 ) * 8; # ts is at start of message, move it to the end
-        event_cnt += 1
-
-        # write packet
-        ts_sec  = log_start_sec + int(timestamp_log_us/1000000)
-        ts_usec = timestamp_log_us % 1000000
-        output.write_packet( ts_sec, ts_usec, flags, channel, rssi_negative, event_cnt, delta_ts, packet )
-
-    # forward packets to ui, too
-    ui.process_packet(tag, data)
-    keep += 1
-
-    if keep == 2800:
-        print('\nThanks for using raccoon.')
-        for sniffer in sniffers:
-            sniffer.abort()
-        sys.exit(0)
+        # if keep == 500:
+        #     print('\nThanks for using raccoon.')
+        #     for sniffer in sniffers:
+        #         sniffer.abort()
+        #     sys.exit(0)
 
 
