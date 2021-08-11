@@ -192,12 +192,7 @@ class ConsoleUI(object):
                 return
             packet  = data[12:-3]
             if aa == 0x8E89BED6:
-                self.process_advertisement(packet, rssi) ########
-            else:
-                if len(packet) > 2:
-                    self.packets  += 1
-                print("Connection event %5u, data packets: %u" % (self.connection_event, self.packets))
-                return
+                self.process_advertisement(packet, rssi)
 
 
 """
@@ -207,24 +202,21 @@ Sniffer connection
 
 class Sniffer(object):
 
-    aborted    = False
+    aborted = False
     next_event = None
 
     def __init__(self, timebase_sec, port, baud, rtscts):
         (self.port, self.baud, self.rtscts) = port, baud, rtscts
 
         # open serial port, use 0.1 timeout for sync
-        self.ser = serial.Serial(self.port, self.baud, timeout=None, rtscts=self.rtscts )
+        self.ser = serial.Serial(self.port, self.baud, timeout=None, rtscts=self.rtscts)
 
         # with Nordic devkits, UART is only activated after setting DTR
         self.ser.dtr = True
-
-        # try to sync with sniffer
-        tries = 0
  
         # reset sniffer
-        self.write( pack('<BH', TAG_CMD_RESET, 0 ) )
-        time.sleep( .250 )
+        self.write(pack('<BH', TAG_CMD_RESET, 0))
+        time.sleep(.250)
         while self.ser.in_waiting:
 
             # reset input buffer
