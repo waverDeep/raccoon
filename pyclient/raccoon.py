@@ -32,7 +32,6 @@
 #      OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##############################################################################
-
 import argparse
 import os
 import queue
@@ -41,13 +40,8 @@ import signal
 import sys
 import threading
 import time
-import uuid
-
 from serial.tools.list_ports import comports
-
-from struct import *
 from pcap import *
-from pklg import *
 from air_to_hci import *
 
 # tags from packet.h
