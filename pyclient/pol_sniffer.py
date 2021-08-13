@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-
+channel_interval = 2500
+mesh_interval = 0.7
+pol_num = 4
 ##############################################################################
 #
 #      Copyright (c) 2018, Raccon BLE Sniffer
@@ -221,13 +223,13 @@ class ConsoleUI(object):
         self.udp_data.clear()
         if udp_dict:
             for _, data in udp_dict.items():
-                udp_data = {'pol': 4, 'data': data}
+                udp_data = {'pol': pol_num, 'data': data}
                 udp_json = json.dumps(udp_data)
                 # print(len(udp_json))
                 self.mesh.write(f'send {udp_json}\n'.encode())
             print('-> send mesh network at: ', time.strftime('%c', time.localtime(time.time())))
             # os.system('clear')
-        threading.Timer(0.7, self.send_packet).start()
+        threading.Timer(mesh_interval, self.send_packet).start()
     # >>>>>>>>>>>>>>>>>>>>
 
 
@@ -419,7 +421,7 @@ while looper:
 
     # process input
     keep = 0
-    while keep < 2500:
+    while keep < channel_interval:
 
         # log earliest event that has been received at least log_delay seconds ago
         earliest_event_sniffer = None
@@ -466,7 +468,7 @@ while looper:
         ui.process_packet(tag, data)
         keep += 1
 
-    if keep == 2500:
+    if keep == channel_interval:
         keep = 0
         channel_stamp += 1
         if channel_stamp == 40:
