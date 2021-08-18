@@ -333,6 +333,23 @@ looper = True
 ui = ConsoleUI()
 filter_mac = bytearray(6)
 
+# get path to config file
+script_path = os.path.dirname(sys.argv[0])
+config_path = config_name
+create_config_template(config_path)
+
+# load config
+sys.path.insert(0, script_path)
+
+# open log writer
+cfg.format = cfg.format.lower()
+if cfg.format == 'pcap':
+    filename = 'trace.pcap'
+    output = PcapNordicTapWriter(filename)
+else:
+    print('Unknown logging format %s' % cfg.format)
+    sys.exit(10)
+
 import config as cfg
 # >>>>>>> mesh >>>>>>>
 mesh_config = cfg.mesh
@@ -350,22 +367,7 @@ rssi_min = -110
 
 
 while looper:
-    # get path to config file
-    script_path = os.path.dirname(sys.argv[0])
-    config_path = config_name
-    create_config_template(config_path)
 
-    # load config
-    sys.path.insert(0, script_path)
-
-    # open log writer
-    cfg.format = cfg.format.lower()
-    if cfg.format == 'pcap':
-        filename = 'trace.pcap'
-        output = PcapNordicTapWriter(filename)
-    else:
-        print('Unknown logging format %s' % cfg.format)
-        sys.exit(10)
 
     cfg_summary = "Config: output %s (%s), min rssi %d dBm" % (filename, cfg.format, rssi_min)
     print(cfg_summary)
