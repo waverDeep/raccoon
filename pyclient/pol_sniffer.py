@@ -336,7 +336,7 @@ filter_mac = bytearray(6)
 # get path to config file
 script_path = os.path.dirname(sys.argv[0])
 config_path = config_name
-create_config_template(config_path)
+create_config_template(script_path+'/'+config_path)
 
 # load config
 sys.path.insert(0, script_path)
