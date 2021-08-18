@@ -334,7 +334,7 @@ ui = ConsoleUI()
 filter_mac = bytearray(6)
 
 # get path to config file
-script_path = os.path.dirname(sys.argv[0])
+script_path = "/home/pi/Documents/raccoon/pyclient"
 config_path = config_name
 create_config_template(script_path+'/'+config_path)
 
