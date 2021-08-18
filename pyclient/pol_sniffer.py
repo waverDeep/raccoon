@@ -341,6 +341,7 @@ create_config_template(config_path)
 # load config
 sys.path.insert(0, script_path)
 
+import config as cfg
 # open log writer
 cfg.format = cfg.format.lower()
 if cfg.format == 'pcap':
@@ -350,7 +351,6 @@ else:
     print('Unknown logging format %s' % cfg.format)
     sys.exit(10)
 
-import config as cfg
 # >>>>>>> mesh >>>>>>>
 mesh_config = cfg.mesh
 
