@@ -234,10 +234,12 @@ class ConsoleUI(object):
                 payload = {'work_code': 7726, 'hole': hole, 'cc_name': cc_name, 'data': udp_json}
                 threading.Thread(target=self.server_request, args=payload).start()
             print('-> send mesh network at: ', time.strftime('%c', time.localtime(time.time())))
-            # os.system('clear')
-        threading.Timer(mesh_interval, self.send_packet).start()
+            # os.system('clear')œ
 
     # >>>>>>>>>>>>>>>>>>>>
+
+    def server_thread(self):
+        threading.Thread(target=self.send_to_server).start()
 
     def send_to_server(self):
         while True:
@@ -374,7 +376,7 @@ mesh_config = cfg.mesh
 mesh = serial.Serial(mesh_config['port'], mesh_config['baud'])
 ui.mesh = mesh
 ui.send_packet()
-ui.send_to_server()
+ui.server_thread()
 # >>>>>>>>>>>>>>>>>>>>
 
 # configuration options
