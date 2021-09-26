@@ -19,7 +19,7 @@ for i in range(loop):
     dir_path = './rssi_pack_{}/info_{}'.format(time.strftime('%Y_%m_%d', time.localtime(time.time())), meter)
     createFolder(dir_path)
     try:
-        result = os.popen('python raccoon.py --channel {}'.format(new_channel)).read()
+        result = os.popen('python pol_getter.py --channel {}'.format(new_channel)).read()
     except Exception as e:
         continue
     outer = time.strftime('%Y-%m-%d-%H-%M', time.localtime(time.time()))
