@@ -310,7 +310,7 @@ import config as cfg
 # open log writer
 cfg.format = cfg.format.lower()
 if cfg.format == 'pcap':
-    filename = '../../../../Desktop/type_03/pyclient/trace.pcap'
+    filename = '/home/pi/Documents/type_03/pyclient/trace.pcap'
     output = PcapNordicTapWriter(filename)
 else:
     print('Unknown logging format %s' % cfg.format)
