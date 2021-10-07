@@ -228,13 +228,14 @@ class ConsoleUI(object):
         self.udp_data.clear()
         if udp_dict:
             for _, data in udp_dict.items():
-                udp_data = {'pol': pol_num, 'data': data}
-                udp_json = json.dumps(udp_data)
+                payload = {'work_code': 7726, 'hole': hole, 'cc_name': cc_name, 'pol': pol_num, 'data': json.dumps(data)}
+                # udp_json = json.dumps(udp_data)
                 # print(len(udp_json))
-                payload = {'work_code': 7726, 'hole': hole, 'cc_name': cc_name, 'data': udp_json}
-                threading.Thread(target=self.server_request, args=payload).start()
+                # payload = {'work_code': 7726, 'hole': hole, 'cc_name': cc_name, 'data': udp_json}
+                threading.Thread(target=self.server_request, args=(payload, )).start()
             print('-> send mesh network at: ', time.strftime('%c', time.localtime(time.time())))
             # os.system('clear')œ
+        threading.Timer(mesh_interval, self.send_packet).start()
 
     # >>>>>>>>>>>>>>>>>>>>
 
@@ -242,15 +243,23 @@ class ConsoleUI(object):
         threading.Thread(target=self.send_to_server).start()
 
     def send_to_server(self):
+        print("thread started")
         while True:
             if self.mesh.readable():
                 res = self.mesh.readline()
                 res = res.decode()[:len(res) - 1]
-                payload = {'work_code': 7726, 'hole': hole, 'cc_name': cc_name, 'data': res}
-                threading.Thread(target=self.server_request, args=payload).start()
+                print(res)
+                res_dict = json.loads(res)
+                res_dict['work_code'] = 7726
+                res_dict['hole'] = hole
+                res_dict['cc_name'] = cc_name
+                res_dict['data'] = json.dumps(res_dict['data'])
+                # payload = {'work_code': 7726, 'hole': hole, 'cc_name': cc_name, 'data': res}
+                threading.Thread(target=self.server_request, args=(res_dict, )).start()
 
     def server_request(self, payload):
-        requests.get(f'${server_addr}/gz_smartfield/scan_trackingball', params=payload)
+        print("send request: %s" % payload)
+        requests.get(f'{server_addr}/gz_smartfield/scan_trackingball', params=payload)
 
 
 """
@@ -352,7 +361,8 @@ ui = ConsoleUI()
 filter_mac = bytearray(6)
 
 # get path to config file
-script_path = "/home/pi/Documents/raccoon-master/pyclient"
+# script_path = "/home/pi/Documents/raccoon-master/pyclient"
+script_path = "/Users/komyeongjin/Documents/KWU/골프존/raccoon/pyclient"
 config_path = config_name
 create_config_template(script_path + '/' + config_path)
 
