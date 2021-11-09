@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 channel_interval = 2500
 mesh_interval = 0.7
-pol_num = 4
+pol_num = 1
 
-server_addr = 'http://192.168.50.125:8904'
+server_addr = 'http://ubinetlab.asuscomm.com:5012'
 hole = '3'
 cc_name = 'test_cc'
 ##############################################################################
@@ -259,7 +259,7 @@ class ConsoleUI(object):
 
     def server_request(self, payload):
         print("send request: %s" % payload)
-        requests.get(f'{server_addr}/gz_smartfield/scan_trackingball', params=payload)
+        requests.get(f'{server_addr}/gz_smartfield/scan_trackingball', params=payload, verify=False)
 
 
 """
@@ -361,8 +361,8 @@ ui = ConsoleUI()
 filter_mac = bytearray(6)
 
 # get path to config file
-# script_path = "/home/pi/Documents/raccoon-master/pyclient"
-script_path = "/Users/komyeongjin/Documents/KWU/골프존/raccoon/pyclient"
+script_path = "/home/pi/Documents/type_04/pyclient"
+# script_path = "/Users/komyeongjin/Documents/KWU/골프존/raccoon/pyclient"
 config_path = config_name
 create_config_template(script_path + '/' + config_path)
 
