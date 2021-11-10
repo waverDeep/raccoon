@@ -44,6 +44,8 @@ from serial.tools.list_ports import comports
 from pcap import *
 from air_to_hci import *
 
+data_count = {}
+
 # tags from packet.h
 TAG_DATA                  = 0
 TAG_MSG_RESET_COMPLETE    = 0x40
@@ -179,6 +181,10 @@ class ConsoleUI(object):
         rssi = -rssi
         if 'GZ' in adv_info:
             print(addr_and_type + "||%d||" % rssi + adv_info)
+            if addr_and_type in data_count:
+                data_count[addr_and_type] += 1
+            if addr_and_type not in data_count:
+                data_count[addr_and_type] = 1
         if 'RTLS' in adv_info:
             print(addr_and_type + "||%d||" % rssi + adv_info)
         # print(addr_and_type + "||%8d||" % rssi + adv_info)
@@ -285,6 +291,7 @@ Main application
 def signal_handler(sig, frame):
     global cfg
     global ui
+    print(data_count)
     print('\nThanks for using raccoon.')
     for sniffer in sniffers:
         sniffer.abort()
@@ -440,6 +447,7 @@ while looper:
         length = len(data)
 
         if tag == TAG_MSG_TERMINATE:
+            print(data_count)
             print('\nreset raccoon.')
             for sniffer in sniffers:
                 sniffer.abort()

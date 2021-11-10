@@ -7,10 +7,10 @@ def createFolder(directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
     except OSError:
-        print ('Error: Creating directory. ' +  directory)
+        print ('Error: Creating directory. ' + directory)
 
 
-meter = input('input informations : ')
+meter = input('input information : ')
 loop = int(input('input loop count : '))
 default_channel = 37
 for i in range(loop):
@@ -26,5 +26,6 @@ for i in range(loop):
     outer = time.strftime('%Y-%m-%d-%H-%M', time.localtime(time.time()))
     f = open('{}/channel_{}_output_{}_{}.txt'.format(dir_path, new_channel, outer, i), 'w')
     f.write(result)
+    print(result)
     f.close()
 

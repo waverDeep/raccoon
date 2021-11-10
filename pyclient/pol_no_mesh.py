@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-channel_interval = 2500
+channel_interval = 5500
 pol_num = 1
 ##############################################################################
 #
@@ -82,11 +82,10 @@ format = 'pcap'
 sniffers = [ SNIFFERS ]
 
 '''
+
 ports = ""
 
-
 keep = 0
-
 
 # vid/pid/baud/rtscts
 sniffer_uart_config = [{0x1366, 0x1015, 1000000, 1}]
@@ -298,7 +297,8 @@ ui = ConsoleUI()
 filter_mac = bytearray(6)
 
 # get path to config file
-script_path = "/home/pi/Documents/type_03/pyclient"
+# script_path = '/Users/sunghyunkim/Documents/Workspace-pycharm/raccoon/pyclient'
+script_path = "/home/pi/Documents/type_04/pyclient"
 # script_path = "/home/pi/Documents/raccoon-master/pyclient"
 config_path = config_name
 create_config_template(script_path+'/'+config_path)
@@ -310,7 +310,8 @@ import config as cfg
 # open log writer
 cfg.format = cfg.format.lower()
 if cfg.format == 'pcap':
-    filename = '/home/pi/Documents/type_03/pyclient/trace.pcap'
+    filename = '/home/pi/Documents/type_04/pyclient/trace.pcap'
+    # filename = '/Users/sunghyunkim/Documents/Workspace-pycharm/raccoon/pyclient/trace.pcap'
     output = PcapNordicTapWriter(filename)
 else:
     print('Unknown logging format %s' % cfg.format)
@@ -430,10 +431,12 @@ while keep < channel_interval:
     ui.process_packet(tag, data)
     keep += 1
 
-    if keep == 400:
+    if keep == 4500:
         print('\nThanks for using raccoon.')
         for sniffer in sniffers:
             sniffer.abort()
         sys.exit(0)
 
-
+for sniffer in sniffers:
+    sniffer.abort()
+sys.exit(0)
