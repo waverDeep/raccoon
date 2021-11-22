@@ -223,9 +223,11 @@ class ConsoleUI(object):
         self.udp_data.clear()
         if udp_dict:
             for _, data in udp_dict.items():
+                if len(data['rssi']) > 30:
+                    data['rssi'] = data['rssi'][:30]
                 udp_data = {'pol': pol_num, 'data': data}
                 udp_json = json.dumps(udp_data)
-                # print(len(udp_json))
+                udp_json.replace(' ', '')
                 self.mesh.write(f'send {udp_json}\n'.encode())
             print('-> send mesh network at: ', time.strftime('%c', time.localtime(time.time())))
             # os.system('clear')
