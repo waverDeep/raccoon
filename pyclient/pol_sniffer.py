@@ -227,7 +227,8 @@ class ConsoleUI(object):
                     data['rssi'] = data['rssi'][:30]
                 udp_data = {'pol': pol_num, 'data': data}
                 udp_json = json.dumps(udp_data)
-                udp_json.replace(' ', '')
+                udp_json = udp_json.replace(' ', '')
+                print(udp_json)
                 self.mesh.write(f'send {udp_json}\n'.encode())
             print('-> send mesh network at: ', time.strftime('%c', time.localtime(time.time())))
             # os.system('clear')
@@ -336,7 +337,7 @@ ui = ConsoleUI()
 filter_mac = bytearray(6)
 
 # get path to config file
-script_path = "/home/pi/Documents/type_04/pyclient"
+script_path = "/home/pi/raccoon/pyclient"
 config_path = config_name
 create_config_template(script_path+'/'+config_path)
 
