@@ -187,7 +187,7 @@ class ConsoleUI(object):
 
         rssi = -rssi
         if 'GZ' in adv_info:
-            # print(addr_and_type + "||%d||" % rssi + adv_info)
+            print(addr_and_type + "||%d||" % rssi + adv_info)
 
             # >>>>>>> mesh >>>>>>>
             if addr not in self.udp_data:
