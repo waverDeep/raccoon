@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-channel_interval = 2500
-mesh_interval = 0.7
-pol_num = 4
+channel_interval = 2000
+mesh_interval = 2.0
+pol_num = 1
 ##############################################################################
 #
 #      Copyright (c) 2018, Raccon BLE Sniffer
@@ -182,7 +182,7 @@ class ConsoleUI(object):
 
         rssi = -rssi
         if 'GZ' in adv_info:
-            # print(addr_and_type + "||%d||" % rssi + adv_info)
+            print(addr_and_type + "||%d||" % rssi + adv_info)
 
             # >>>>>>> mesh >>>>>>>
             if addr not in self.udp_data:

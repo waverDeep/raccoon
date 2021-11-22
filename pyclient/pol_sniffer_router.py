@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-channel_interval = 2500
-mesh_interval = 0.7
+channel_interval = 2000
+mesh_interval = 2.0
 pol_num = 1
 
 server_addr = 'http://ubinetlab.asuscomm.com:5012'
-hole = '3'
+hole = '8'
 cc_name = 'test_cc'
 ##############################################################################
 #
