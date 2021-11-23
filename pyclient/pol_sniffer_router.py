@@ -196,7 +196,7 @@ class ConsoleUI(object):
                 self.udp_data[addr]['rssi'].append(rssi)
             # >>>>>>>>>>>>>>>>>>>>
         if 'RTLS' in adv_info:
-            # print(addr_and_type + "||%d||" % rssi + adv_info)
+            print(addr_and_type + "||%d||" % rssi + adv_info)
 
             # >>>>>>> mesh >>>>>>>
             if addr not in self.udp_data:
@@ -216,14 +216,15 @@ class ConsoleUI(object):
             packet = data[12:-3]
             if aa == 0x8E89BED6:
                 self.process_advertisement(packet, rssi, channel)  ########
-            else:
-                if len(packet) > 2:
-                    self.packets += 1
-                # print("Connection event %5u, data packets: %u" % (self.connection_event, self.packets))
-                return
+            # else:
+            #     if len(packet) > 2:
+            #         self.packets += 1
+            #     # print("Connection event %5u, data packets: %u" % (self.connection_event, self.packets))
+            #     return
 
     # >>>>>>> mesh >>>>>>>
     def send_packet(self):
+        print("prepare_send_message...")
         udp_dict = self.udp_data.copy()
         self.udp_data.clear()
         if udp_dict:
@@ -236,6 +237,7 @@ class ConsoleUI(object):
             print('-> send mesh network at: ', time.strftime('%c', time.localtime(time.time())))
             # os.system('clear')œ
         threading.Timer(mesh_interval, self.send_packet).start()
+        print("out_send_packet_message...")
 
     # >>>>>>>>>>>>>>>>>>>>
 
@@ -361,7 +363,7 @@ ui = ConsoleUI()
 filter_mac = bytearray(6)
 
 # get path to config file
-script_path = "/home/pi/Documents/type_04/pyclient"
+script_path = "/home/pi/raccoon/pyclient"
 # script_path = "/Users/komyeongjin/Documents/KWU/골프존/raccoon/pyclient"
 config_path = config_name
 create_config_template(script_path + '/' + config_path)
@@ -461,6 +463,7 @@ while looper:
         for sniffer in sniffers:
             event = sniffer.peek_event()
             if event == None:
+                keep += 5
                 continue
 
             # get event time
@@ -477,6 +480,7 @@ while looper:
         # check if log_delay old
         if (earliest_event_timestamp_us == None) or ((time.time() - earliest_event_arrival_time) < log_delay):
             time.sleep(0.1)
+            keep += 5
             continue
 
         # finally, log event
