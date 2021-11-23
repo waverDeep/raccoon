@@ -438,7 +438,7 @@ while looper:
         for sniffer in sniffers:
             event = sniffer.peek_event()
             if event == None:
-                keep += 5
+                keep += 1
                 continue
 
             # get event time
@@ -455,7 +455,7 @@ while looper:
         # check if log_delay old
         if (earliest_event_timestamp_us == None) or ((time.time() - earliest_event_arrival_time) < log_delay):
             time.sleep(0.1)
-            keep += 5
+            keep += 1
             continue
 
         # finally, log event
@@ -464,10 +464,11 @@ while looper:
         length = len(data)
 
         if tag == TAG_MSG_TERMINATE:
-            print('\nreset raccoon.')
-            for sniffer in sniffers:
-                sniffer.abort()
-            break
+            ui.log_info("Restart sniffer on channel #%u" % earliest_event_sniffer.channel)
+            earliest_event_sniffer.write(
+                pack('<BHIBII6sB', TAG_CMD_SNIFF_CHANNEL, 20, 0, earliest_event_sniffer.channel,
+                     ADVERTISING_RADIO_ACCESS_ADDRESS, ADVERTISING_CRC_INIT, filter_mac, rssi_min_neg))
+
         if tag == TAG_DATA:
             # parse header
             timestamp_sniffer_us, channel, flags, rssi_negative, aa = unpack_from("<IBBBxI", data)
