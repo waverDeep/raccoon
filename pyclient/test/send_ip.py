@@ -2,7 +2,9 @@ import pysftp
 import socket
 from requests import get
 
-with open('pol_test.txt', 'w') as f:
+file_name = 'pol_test.txt'
+
+with open(file_name, 'w') as f:
     f.write(f'IP Address(Internal) : {socket.gethostbyname(socket.gethostname())}\n')
     f.write(f'IP Address(External) : {get("https://api.ipify.org").text}')
     f.close()
@@ -21,7 +23,7 @@ if cnopts.hostkeys.lookup(host) is None:
     hostkeys = cnopts.hostkeys  # 혹시 모르니 다른 호스트키 정보들 백업
     cnopts.hostkeys = None
 
-file_name = 'pol_test.txt'
+
 # local_path = '/Users/komyeongjin/Documents/KWU/골프존/raccoon/pyclient/test/'
 remote_path = '/smartfield_upload/'
 
